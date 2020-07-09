@@ -1,5 +1,9 @@
 # swift-compile-demo
-Swift编写,将Scheme语言转换成对应的C语言编译过程模拟demo
+Swift编写,将Scheme语言转换成对应的C语言转议过程模拟demo
+
+## Project1: swift-compile 模拟编译器
+内部模拟编译器对Schame的转议过程
+词法分析->语法分析->转换->代码生成
 
 eg:
 
@@ -120,4 +124,15 @@ After transform AST:
 The code generated:
 multiply(add(1.4,3))
 
+```
+
+## swift-interpreter
+
+完成一个swift版本的四则运算解释器demo
+可以实现四则运算加括号的任意嵌套
+eg:
+
+```
+input: "3+(6-4)*2+(1+(51-4))"
+print: 55
 ```
