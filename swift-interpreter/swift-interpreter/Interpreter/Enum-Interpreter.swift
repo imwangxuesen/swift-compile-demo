@@ -11,6 +11,7 @@ import Foundation
 public enum OCToken: Equatable {
     case constant(OCConstant)
     case operation(OCOperation)
+    case paren(OCDirection)
     case eof
     case whiteSpaceAndNewLine
     
@@ -23,6 +24,24 @@ public enum OCToken: Equatable {
         case (OCToken.eof, OCToken.eof):
             return true
         case (OCToken.whiteSpaceAndNewLine, OCToken.whiteSpaceAndNewLine):
+            return true
+        case let (OCToken.paren(left), OCToken.paren(right)):
+            return left == right
+        default:
+            return false
+        }
+    }
+}
+
+public enum OCDirection: Equatable {
+    case left
+    case right
+    
+    public static func == (lhs: OCDirection, rhs: OCDirection) -> Bool {
+        switch (lhs, rhs) {
+        case (OCDirection.left, OCDirection.left):
+            return true
+        case (OCDirection.right, OCDirection.right):
             return true
         default:
             return false

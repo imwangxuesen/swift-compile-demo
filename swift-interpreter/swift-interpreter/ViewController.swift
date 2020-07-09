@@ -12,12 +12,10 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let interperter = JInterpreter("1.9*8.0")
+        let interperter = JInterpreter("3+(6-4)*2+(1+(51-4))")
         let result = interperter.expr()
         print(result)
         // Do any additional setup after loading the view.
     }
-
-
 }
 

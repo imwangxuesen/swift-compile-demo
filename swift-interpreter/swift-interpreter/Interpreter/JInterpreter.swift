@@ -9,145 +9,75 @@
 import Foundation
 
 public class JInterpreter {
-    private let text: String
-    private var currentIndex: Int
-    private var currentCharacter: Character?
-    
+
+    private var lexer: JLexer
     private var currentTk: OCToken
     
     public init(_ input: String) {
-        if input.count == 0 {
-            fatalError("Error! input can not be empty")
-        }
-        self.text = input
-        currentIndex = 0
-        currentCharacter = text[text.startIndex]
-        currentTk = .eof
-    }
-    
-    /// 移动到下一个位置
-    func advance() {
-        currentIndex += 1
-        guard currentIndex < text.count else {
-            currentCharacter = nil
-            return
-        }
-        currentCharacter = text[text.index(text.startIndex,offsetBy: currentIndex)]
-    }
-    
-    // 获取下一个token
-    func nextTk() -> OCToken {
-        if currentIndex > self.text.count - 1 {
-            return .eof
-        }
-        
-        if CharacterSet.whitespacesAndNewlines.contains((currentCharacter?.unicodeScalars.first!)!) {
-            skipWhiteSpaceAndNewLines()
-            return .whiteSpaceAndNewLine
-        }
-        
-        if CharacterSet.decimalDigits.contains((currentCharacter?.unicodeScalars.first!)!) {
-            return number()
-        }
-        
-        if currentCharacter == "+" {
-            advance()
-            return .operation(.plus)
-        }
-        
-        if currentCharacter == "-" {
-            advance()
-            return .operation(.minus)
-        }
-        
-        if currentCharacter == "*" {
-            advance()
-            return .operation(.mult)
-        }
-        
-        if currentCharacter == "/" {
-            advance()
-            return .operation(.intDiv)
-        }
-        
-        advance()
-        return .eof
+        lexer = JLexer(input)
+        currentTk = lexer.nextTk()
     }
     
     // 进行解释
-    func expr() -> Float {
-        
-        currentTk = nextTk()
-        
-        guard case let .constant(.float(left)) = currentTk else {
-            return 0
+    func expr() -> Int {
+        var result = term()
+        while [OCToken.operation(.plus),OCToken.operation(.minus)].contains(currentTk) {
+            let tk = currentTk
+            eat(currentTk)
+            if tk == .operation(.plus) {
+                result = result + self.term()
+            } else if tk == .operation(.minus) {
+                result = result - self.term()
+            }
         }
-        eat(currentTk)
+        return result
         
-        let op = currentTk
-        eat(currentTk)
-        
-        guard case let .constant(.float(right)) = currentTk else {
-            return 0
-        }
-        eat(currentTk)
-        
-        switch op {
-        case .operation(.plus):
-            return left + right
-        case .operation(.minus):
-            return left - right
-        case .operation(.mult):
-            return left * right
-        case .operation(.intDiv):
-            return left / right
-        default:
-            return left + right
-        }
-        
-        return left + right
     }
     
-    func number() -> OCToken {
-        var numStr = ""
-        while let character: Character = currentCharacter, CharacterSet.decimalDigits.contains((character.unicodeScalars.first!)) {
-            numStr += String(character)
-            advance()
-
-        }
-        
-        
-        if let character: Character = currentCharacter, character == "." {
-            numStr += "."
-            advance()
-            while let character:Character = currentCharacter, CharacterSet.decimalDigits.contains(character.unicodeScalars.first!) {
-                numStr += String(character)
-                advance()
-                
+    func term() -> Int {
+        var result = factor()
+        while [OCToken.operation(.mult), OCToken.operation(.intDiv)].contains(currentTk) {
+            let tk = currentTk
+            eat(currentTk)
+            if tk == OCToken.operation(.mult) {
+                result = result * factor()
+            } else if tk == OCToken.operation(.intDiv) {
+                result = result / factor()
             }
-            return .constant(.float(Float(numStr)!))
         }
-        
-        
-        return .constant(.integer(Int(numStr)!))
+        return result
+    }
+    
+    func factor() -> Int {
+        let tk = currentTk
+        switch tk {
+        case let .constant(.integer(result)):
+            eat(.constant(.integer(result)))
+            return result
+        case .paren(.left):
+            eat(.paren(.left))
+            let result = expr()
+            eat(.paren(.right))
+            return result
+        default:
+            return 0
+        }
     }
     
     func eat(_ token: OCToken) {
         if currentTk == token {
-            currentTk = nextTk()
-            if currentTk == .whiteSpaceAndNewLine {
-                currentTk = nextTk()
+            currentTk = lexer.nextTk()
+            if currentTk == OCToken
+                .whiteSpaceAndNewLine {
+                currentTk = lexer.nextTk()
             }
         } else {
-            fatalError("Error: eat wrong")
-
+            error()
         }
-        
     }
     
-    private func skipWhiteSpaceAndNewLines() {
-        while CharacterSet.whitespacesAndNewlines.contains((currentCharacter?.unicodeScalars.first!)!) {
-            advance()
-        }
+    func error() -> Void {
+        fatalError("Error!")
     }
+    
 }
